@@ -755,7 +755,7 @@ function loadSlateText(text){const rows=parseCSV(text);const hi=rows.findIndex(r
   const date=isoDate(get(r,cD));const x={};H.forEach((h,i)=>{if(!KNOWN.has(L[i])){const v=num(get(r,i));if(v!=null){x[L[i]]=v;exs.add(L[i])}}});
   out.push({id:'slate'+k,date,yr:slateSeason(date),day:dayOf(date)||'Weekend',slate:get(r,cS)||slateOf(get(r,cT)),at,ac:confFix(get(r,cAc)||confOf[at]||''),ht,hc:confFix(get(r,cHc)||confOf[ht]||''),line,type:'regular',x,tot:0,as:0,hs:0,sc:false})});
  SLATE={rows:out,demo:false,excl:null,extras:[...exs]};$('modelMsg').innerHTML=bad?`<div class="note">${bad} row(s) skipped (missing teams or current total).</div>`:'';ensureModelAsync()}
-drop.addEventListener('drop',async e=>{const f=e.dataTransfer.files[0];if(f)loadSlateText(await f.text())});
+const drop=$('drop');if(drop)drop.addEventListener('drop',async e=>{const f=e.dataTransfer.files[0];if(f)loadSlateText(await f.text())});
 $('sFilter').onchange=()=>{if(MODEL.res)renderSlate()};
 $('be').onchange=e=>{const v=parseFloat(e.target.value);if(v>=40&&v<=70){BE=v/100;if(MODEL.res)renderModel()}};
 $('formW').oninput=e=>{FORMW=+e.target.value/100;$('formWv').textContent=e.target.value+'%';if(MODEL.res)renderSlate()};
