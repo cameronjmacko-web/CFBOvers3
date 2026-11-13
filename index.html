@@ -53,7 +53,7 @@ table{border-collapse:collapse;width:100%}
 th,td{padding:7px 9px;text-align:left;border-bottom:1px solid #1b2a46;font-size:12.5px;white-space:nowrap}
 th{color:var(--mut);font-size:11px;text-transform:uppercase;letter-spacing:.06em;cursor:pointer;position:sticky;top:0;background:var(--panel)}
 tr:hover td{background:#ffffff06}
-.tag{padding:2px 9px;border-radius:999px;font-weight:600;font-size:11.5px}.tag.o{background:#34d39922;color:var(--over)}.tag.u{background:#fb718522;color:var(--under)}.tag.p{background:#ffffff14;color:var(--mut)}
+.tag{padding:2px 9px;border-radius:999px;font-weight:600;font-size:11.5px}.tag.o{background:#34d39922;color:var(--over)}.tag.ol{background:#34d39916;color:#6ee7b7}.tag.u{background:#fb718522;color:var(--under)}.tag.ul{background:#fb718516;color:#fda4af}.tag.p{background:#ffffff14;color:var(--mut)}
 .scroll{max-height:460px;overflow:auto;border-radius:10px;-webkit-overflow-scrolling:touch}
 .heat td.c{text-align:center;font-weight:600;border-radius:8px;border:2px solid var(--panel)}
 .heat td.c small{display:block;font-weight:400;font-size:10.5px;opacity:.85}
@@ -731,15 +731,15 @@ function scoreSlate(){const R=MODEL.res;if(!R||R.fail)return[];const mode=$('sFi
   const f=baseFeats(g,R.allow);addTeamFeats(f,R.tm,R.gr,g);addFormFeats(f,fm,g.line);const PA=pickPrior(histForm(g.at,String(+g.yr-1),null),g.at,g.yr),PH=pickPrior(histForm(g.ht,String(+g.yr-1),null),g.ht,g.yr);addPriorFeats(f,priorFeatures(PA,PH),g.line);const pr=predict(R.model,f),sl=pr.p*(1-pr.p)*100;
   const why=pr.c.sort((a,b)=>Math.abs(b[1])-Math.abs(a[1])).slice(0,3).map(([k,t])=>({k,pp:t*sl}));const proj=fm.ok?blendTot(fm,FORMW):null;
   return{...g,p:pr.p,why,A,H,PA,PH,fm,proj,diff:proj==null?null:proj-g.line}}).filter(g=>{const lb=Math.round(g.line*2)/2;return mode==='all'?true:mode==='exact'?lb===59.5:lb>=59.5}).sort((a,b)=>b.p-a.p)}
-const callOf=p=>p>=BE?'Over':p<=1-BE?'Under':'Pass';
+const callOf=p=>p>=BE?'Over':p<=1-BE?'Under':p>=.51?'Over Lean':p<.49?'Under Lean':'Pass';
 const sd1=x=>(x>=0?'+':'−')+Math.abs(x).toFixed(1);
 function renderSlate(){const pan=$('slatePanel');if(!SLATE.rows.length){pan.style.display='none';return}
  const R=MODEL.res;if(!R||R.fail){pan.style.display='none';return}pan.style.display='block';const rows=scoreSlate();
  const miss=rows.filter(g=>!g.A||!g.H).length,lim=rows.filter(g=>(g.A&&g.A.n<5)||(g.H&&g.H.n<5)).length;
  $('slateCnt').textContent=`— ${rows.length} of ${SLATE.rows.length} games shown`;
  const th=latestThrough();
- $('slateHint').innerHTML=(SLATE.demo?'DEMO: past games scored as if unseen. ':'')+`Market totals are the <b>current</b> lines at upload time; the actual closing total is only known near kickoff, so probabilities are provisional. Call = Over if chance ≥ ${pct(BE)}, Under if ≤ ${pct(1-BE)}, otherwise Pass. Projected total adds each team's estimate (its scoring averages blended with the opponent's points allowed; last-5 weight ${Math.round(FORMW*100)}%). Team form comes from completed games in the game history; uploaded form snapshots (latest through ${esc(th)}) are used only for games after their date and only when they have more or newer games. <b>${miss}</b> game(s) with a missing team match, <b>${lim}</b> with limited samples.`;
- $('stbl').querySelector('tbody').innerHTML=rows.map((g,i)=>{const call=callOf(g.p),cl=call==='Over'?'o':call==='Under'?'u':'p',fl=slateFlags(g);
+ $('slateHint').innerHTML=(SLATE.demo?'DEMO: past games scored as if unseen. ':'')+`Market totals are the <b>current</b> lines at upload time; the actual closing total is only known near kickoff, so probabilities are provisional. Call = Over if chance ≥ ${pct(BE)}, Under if ≤ ${pct(1-BE)}; Over Lean if ≥ 51.0% but below the Over cutoff, Under Lean if < 49.0% but above the Under cutoff, otherwise Pass. Leans are directional only and are not qualifying bets. Projected total adds each team's estimate (its scoring averages blended with the opponent's points allowed; last-5 weight ${Math.round(FORMW*100)}%). Team form comes from completed games in the game history; uploaded form snapshots (latest through ${esc(th)}) are used only for games after their date and only when they have more or newer games. <b>${miss}</b> game(s) with a missing team match, <b>${lim}</b> with limited samples.`;
+ $('stbl').querySelector('tbody').innerHTML=rows.map((g,i)=>{const call=callOf(g.p),cl=call==='Over'?'o':call==='Over Lean'?'ol':call==='Under'?'u':call==='Under Lean'?'ul':'p',fl=slateFlags(g);
   const why=g.why.map(x=>`${esc(labelOf(x.k))} ${x.pp>=0?'+':'−'}${Math.abs(x.pp).toFixed(1)}`).join(' · ');
   const fh=fl.map(f=>`<span style="color:${f.k==='bad'?'var(--under)':f.k==='warn'?'var(--gold)':'var(--mut)'}">${f.k==='bad'?'⚠':f.k==='warn'?'△':'ⓘ'} ${esc(f.t)}</span>`).join('<br>');
   const samp=`${g.A?g.A.n+' ('+g.A.src+')':'none'} · ${g.H?g.H.n+' ('+g.H.src+')':'none'}`,pt=g.proj==null?'—':g.proj.toFixed(1),dt=g.diff==null?'—':sd1(g.diff);
